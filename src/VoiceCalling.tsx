@@ -26,11 +26,16 @@ const Basics = () => {
   const isConnected = useIsConnected();
   const [channel, setChannel] = useState("");
   const [micOn, setMic] = useState(true);
+  const [ws, setWs] = useState<WebSocket | null>(null);
 
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
 
   useJoin({ appid: appId, channel: channel, token: null }, calling);
   usePublish([localMicrophoneTrack]);
+
+  useEffect(() => {
+    setWs(new WebSocket("wss://xb8w8zh0-8000.inc1.devtunnels.ms/audiostream"));
+  }, []);
 
   useEffect(() => {
     console.log("*************************************");
@@ -39,11 +44,9 @@ const Basics = () => {
         // Get PCM data from the first channel
         const pcmData = audioBuffer.getChannelData(0);
         console.log("Raw PCM data:", pcmData);
+        console.log("WebSocket state:", ws?.readyState);
 
-        const ws = new WebSocket(
-          "wss://xb8w8zh0-8000.inc1.devtunnels.ms/audiostream"
-        );
-
+        if (!ws) return;
         ws.onopen = () => {
           console.log("WebSocket connection established");
         };
@@ -52,10 +55,14 @@ const Basics = () => {
           console.error("WebSocket error:", error);
         };
 
+        ws.onmessage = (event) => {
+          console.log("---------------------------------------------");
+          console.log("Received WebSocket response:", event.data);
+          console.log("---------------------------------------------");
+        };
+
         if (ws.readyState === WebSocket.OPEN) {
-          ws.send(
-            JSON.stringify({ event: "media", media: { payload: pcmData } })
-          );
+          ws.send(pcmData);
         } else {
           console.warn("WebSocket is not open. PCM data not sent.");
         }
