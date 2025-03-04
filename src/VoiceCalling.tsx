@@ -39,7 +39,26 @@ const Basics = () => {
         // Get PCM data from the first channel
         const pcmData = audioBuffer.getChannelData(0);
         console.log("Raw PCM data:", pcmData);
-        // stream pcmData as needed
+
+        const ws = new WebSocket(
+          "wss://xb8w8zh0-8000.inc1.devtunnels.ms/audiostream"
+        );
+
+        ws.onopen = () => {
+          console.log("WebSocket connection established");
+        };
+
+        ws.onerror = (error) => {
+          console.error("WebSocket error:", error);
+        };
+
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({ event: "media", media: { payload: pcmData } })
+          );
+        } else {
+          console.warn("WebSocket is not open. PCM data not sent.");
+        }
       })
     );
     console.log("*************************************");
