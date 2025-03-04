@@ -1,20 +1,23 @@
-import { useState } from "react";
-import AgoraRTC, { AgoraRTCProvider,   LocalUser,
+import { useEffect, useState } from "react";
+import AgoraRTC, {
+  AgoraRTCProvider,
+  LocalUser,
   RemoteUser,
   useIsConnected,
   useJoin,
   useLocalMicrophoneTrack,
   usePublish,
-  useRemoteUsers, } from "agora-rtc-react";
+  useRemoteUsers,
+} from "agora-rtc-react";
 
 export const VoiceCalling = () => {
   const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-  return(
-      <AgoraRTCProvider client={client}>
-        <Basics />
-      </AgoraRTCProvider>
+  return (
+    <AgoraRTCProvider client={client}>
+      <Basics />
+    </AgoraRTCProvider>
   );
-}
+};
 
 const appId = import.meta.env.VITE_APP_AGORA_APP_ID;
 
@@ -25,9 +28,22 @@ const Basics = () => {
   const [micOn, setMic] = useState(true);
 
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(micOn);
-  
-  useJoin({appid: appId, channel: channel, token: null}, calling);
+
+  useJoin({ appid: appId, channel: channel, token: null }, calling);
   usePublish([localMicrophoneTrack]);
+
+  useEffect(() => {
+    console.log("*************************************");
+    console.log(
+      localMicrophoneTrack?.setAudioFrameCallback((audioBuffer) => {
+        // Get PCM data from the first channel
+        const pcmData = audioBuffer.getChannelData(0);
+        console.log("Raw PCM data:", pcmData);
+        // stream pcmData as needed
+      })
+    );
+    console.log("*************************************");
+  }, [localMicrophoneTrack]);
 
   const remoteUsers = useRemoteUsers();
 
@@ -56,7 +72,7 @@ const Basics = () => {
         ) : (
           <div>
             <input
-              onChange={e => setChannel(e.target.value)}
+              onChange={(e) => setChannel(e.target.value)}
               placeholder="<Your channel Name>"
               value={channel}
             />
@@ -71,14 +87,12 @@ const Basics = () => {
         )}
       </div>
       {isConnected && (
-        <div style={{padding: "20px"}}>
+        <div style={{ padding: "20px" }}>
           <div>
-            <button onClick={() => setMic(a => !a)}>
-              {micOn ? "Disable mic" : "Enable mic" }
+            <button onClick={() => setMic((a) => !a)}>
+              {micOn ? "Disable mic" : "Enable mic"}
             </button>
-            <button
-              onClick={() => setCalling(a => !a)}
-              >
+            <button onClick={() => setCalling((a) => !a)}>
               {calling ? "End calling" : "Start calling"}
             </button>
           </div>
